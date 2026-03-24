@@ -115,7 +115,17 @@ theorem eLorentzNorm_add_le'' :
 theorem lintegral_antitone_mul_le {f g k : ℝ≥0 → ℝ≥0∞}
   (h : ∀ {t}, ∫⁻ s in Set.Iio t, f s ≤ ∫⁻ s in Set.Iio t, g s) (hk : Antitone k) :
     ∫⁻ s, k s * f s ≤ ∫⁻ s, k s * g s := by
-  sorry --use: Lebesgue induction
+  -- Layer cake / Tonelli approach for Hardy-Littlewood antitone integral inequality
+  have hk_eq : ∀ s, k s = ∫⁻ (c : ENNReal) in Set.Iio (k s), 1 := by
+    intro s; rw [MeasureTheory.setLIntegral_one]; exact ENNReal.volume_Iio.symm
+  have key : ∀ (c : ENNReal), ∫⁻ (s : NNReal) in {s | c < k s}, f s ≤ ∫⁻ (s : NNReal) in {s | c < k s}, g s := by
+    sorry
+  have lhs_eq : ∫⁻ (s : NNReal), k s * f s = ∫⁻ (c : ENNReal), ∫⁻ (s : NNReal) in {s | c < k s}, f s := by
+    sorry
+  have rhs_eq : ∫⁻ (s : NNReal), k s * g s = ∫⁻ (c : ENNReal), ∫⁻ (s : NNReal) in {s | c < k s}, g s := by
+    sorry
+  rw [lhs_eq, rhs_eq]
+  exact MeasureTheory.lintegral_mono (fun c => key c) --use: Lebesgue induction
 
 /-- The function `k` in the proof of Theorem 6.7 in https://doi.org/10.1007/978-3-319-30034-4 -/
 noncomputable def lorentz_helper (f : α → ε) (p q : ℝ≥0∞) (μ : Measure α) : ℝ≥0 → ℝ≥0∞ :=
