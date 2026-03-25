@@ -29,7 +29,29 @@ lemma eLpNorm_withDensity_scale_constant' {f : ℝ≥0 → ℝ≥0∞} (hf : AES
   split_ifs with p_zero p_top
   · rfl
   · --TODO: case p = ⊤
-    sorry
+    set ν := volume.withDensity (fun (t : NNReal) => ((t : ENNReal))⁻¹)
+    have hmul : Measurable (fun (t : NNReal) => a * t) := measurable_const_mul a
+    have hnu : Measure.map (fun t => a * t) ν = ν := by
+      ext s hs
+      simp only [ν]
+      rw [Measure.map_apply hmul hs, withDensity_apply _ hs, withDensity_apply _ (hmul hs)]
+      rw [← lintegral_indicator hs _, ← lintegral_indicator (hmul hs) _]
+      have key : ∀ (t : NNReal), ((fun t => a * t) ⁻¹' s).indicator (fun t => ((t : ENNReal))⁻¹) t =
+          (↑a : ENNReal) * s.indicator (fun t => ((t : ENNReal))⁻¹) (a * t) := by
+        intro t
+        unfold Set.indicator
+        split <;> simp only [Set.mem_preimage] at *
+        · rw [if_pos ‹_›, ENNReal.coe_mul,
+              ENNReal.mul_inv (Or.inl (ENNReal.coe_ne_zero.mpr h)) (Or.inl ENNReal.coe_ne_top),
+              ← mul_assoc, ENNReal.mul_inv_cancel (ENNReal.coe_ne_zero.mpr h) ENNReal.coe_ne_top, one_mul]
+        · rw [if_neg ‹_›, mul_zero]
+      simp_rw [key]
+      rw [lintegral_const_mul' _ _ ENNReal.coe_ne_top]
+      exact lintegral_nnreal_scale_constant' h
+    have hf_map : AEStronglyMeasurable f (Measure.map (fun t => a * t) ν) := by
+      rw [hnu]; exact hf.mono_ac (withDensity_absolutelyContinuous _ _)
+    rw [show (fun t => f (a * t)) = f ∘ (fun t => a * t) from rfl]
+    rw [← eLpNormEssSup_map_measure hf_map hmul.aemeasurable, hnu]
   · symm
     rw [eLpNorm'_eq_lintegral_enorm, eLpNorm'_eq_lintegral_enorm]
     rw [lintegral_withDensity_eq_lintegral_mul₀' (by measurability)
