@@ -119,7 +119,54 @@ theorem lintegral_antitone_mul_le {f g k : ℝ≥0 → ℝ≥0∞}
   have hk_eq : ∀ s, k s = ∫⁻ (c : ENNReal) in Set.Iio (k s), 1 := by
     intro s; rw [MeasureTheory.setLIntegral_one]; exact ENNReal.volume_Iio.symm
   have key : ∀ (c : ENNReal), ∫⁻ (s : NNReal) in {s | c < k s}, f s ≤ ∫⁻ (s : NNReal) in {s | c < k s}, g s := by
-    sorry
+    intro c
+    let S := {s : NNReal | c < k s}
+    by_cases hempty : S = ∅
+    · rw [show {s : NNReal | c < k s} = ∅ from hempty]; simp
+    · by_cases hbdd : BddAbove S
+      · let α := sSup S
+        have hne : Set.Nonempty S := Set.nonempty_iff_ne_empty.mpr hempty
+        have hIio_sub_S : Set.Iio α ⊆ S := by
+          intro r hr; simp only [Set.mem_Iio] at hr
+          obtain ⟨t, htS, hrt⟩ := exists_lt_of_lt_csSup hne hr
+          exact lt_of_lt_of_le htS (hk (le_of_lt hrt))
+        have hS_sub_Iic : S ⊆ Set.Iic α := fun r hr => le_csSup hbdd hr
+        have h_ae : S =ᵐ[MeasureTheory.volume] Set.Iio α := by
+          rw [MeasureTheory.ae_eq_set]
+          constructor
+          · have hsub : S \ Set.Iio α ⊆ {α} := by
+              intro x ⟨hxS, hxIio⟩
+              simp only [Set.mem_singleton_iff, Set.mem_Iio, not_lt] at hxIio ⊢
+              exact le_antisymm (hS_sub_Iic hxS) hxIio
+            exact le_antisymm (le_trans 
+              (MeasureTheory.measure_mono hsub)
+              (le_of_eq (MeasureTheory.measure_singleton α))) 
+              (zero_le _)
+          · rw [Set.diff_eq_empty.mpr hIio_sub_S]; 
+            exact MeasureTheory.measure_empty
+        rw [MeasureTheory.setLIntegral_congr h_ae,
+            MeasureTheory.setLIntegral_congr h_ae]
+        exact h
+      · have hS_univ : S = Set.univ := by
+          rw [Set.eq_univ_iff_forall]; intro s
+          obtain ⟨t, htS, hst⟩ : ∃ t ∈ S, s ≤ t := by
+            by_contra hall; push_neg at hall
+            exact hbdd ⟨s, fun t ht => le_of_lt (hall t ht)⟩
+          exact lt_of_lt_of_le htS (hk hst)
+        rw [show {s : NNReal | c < k s} = Set.univ from hS_univ]
+        rw [MeasureTheory.setLIntegral_univ, MeasureTheory.setLIntegral_univ]
+        have huniv : Set.univ = ⋃ (n : ℕ), Set.Iio ((n : NNReal)) := by
+          ext x; simp only [Set.mem_univ, Set.mem_iUnion, Set.mem_Iio, true_iff]
+          obtain ⟨n, hn⟩ := exists_nat_gt (x : ℝ)
+          exact ⟨n, by exact_mod_cast hn⟩
+        have hdir : Directed (· ⊆ ·) (fun (n : ℕ) => Set.Iio ((n : NNReal))) :=
+          Monotone.directed_le 
+            (fun _ _ h => Set.Iio_subset_Iio (Nat.cast_le.mpr h))
+        rw [← MeasureTheory.setLIntegral_univ f,
+            ← MeasureTheory.setLIntegral_univ g, huniv]
+        rw [MeasureTheory.setLIntegral_iUnion_of_directed f hdir]
+        rw [MeasureTheory.setLIntegral_iUnion_of_directed g hdir]
+        exact iSup_mono fun n => h
   have lhs_eq : ∫⁻ (s : NNReal), k s * f s = ∫⁻ (c : ENNReal), ∫⁻ (s : NNReal) in {s | c < k s}, f s := by
     sorry
   have rhs_eq : ∫⁻ (s : NNReal), k s * g s = ∫⁻ (c : ENNReal), ∫⁻ (s : NNReal) in {s | c < k s}, g s := by
