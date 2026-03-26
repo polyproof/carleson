@@ -240,7 +240,25 @@ lemma liminf_rearrangement [TopologicalSpace ε] {s : ℕ → α → ε}
                 filter_upwards [h] with a ha_le
                 exact fun ha_lt => lt_of_lt_of_le ha_lt ha_le
               _ ≤ Filter.liminf (fun i => μ {a | y < ‖s i a‖ₑ}) Filter.atTop := by
-                sorry
+                have h_sub : {a | y < Filter.liminf (fun i => ‖s i a‖ₑ) Filter.atTop} ⊆
+                    ⋃ N, ⋂ n ∈ Set.Ici N, {a | y < ‖s n a‖ₑ} := by
+                  intro a ha
+                  simp only [Set.mem_setOf_eq] at ha
+                  simp only [Set.mem_iUnion, Set.mem_iInter, Set.mem_setOf_eq]
+                  have hev := Filter.eventually_lt_of_lt_liminf ha
+                  obtain ⟨N, hN⟩ := hev.exists_forall_of_atTop
+                  exact ⟨N, fun n hn => hN n hn⟩
+                apply le_trans (MeasureTheory.measure_mono h_sub)
+                have h_mono_sets : Monotone (fun N => ⋂ n ∈ Set.Ici N, {a | y < ‖s n a‖ₑ}) := by
+                  intro N M hNM
+                  apply Set.biInter_subset_biInter_left
+                  exact Set.Ici_subset_Ici.mpr hNM
+                rw [Monotone.measure_iUnion h_mono_sets]
+                apply iSup_le
+                intro N
+                apply Filter.le_liminf_of_le (hf := ⟨⊤, fun _ _ => le_top⟩)
+                apply Filter.eventually_atTop.mpr
+                exact ⟨N, fun n hn => MeasureTheory.measure_mono (Set.biInter_subset_of_mem (Set.mem_Ici.mpr hn))⟩
         have hev : ∀ᶠ i in Filter.atTop, x < distribution (s i) y μ :=
           Filter.eventually_lt_of_lt_liminf (lt_of_lt_of_le ha hfatou)
         have hev2 : ∀ᶠ i in Filter.atTop, y ≤ rearrangement (s i) x μ :=
