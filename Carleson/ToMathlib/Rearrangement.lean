@@ -227,7 +227,25 @@ lemma tendsto_rearrangement [TopologicalSpace ε] {s : ℕ → α → ε}
 lemma liminf_rearrangement [TopologicalSpace ε] {s : ℕ → α → ε}
   (hs : ∀ᶠ i in atTop, AEStronglyMeasurable (s i) μ) (hf : AEStronglyMeasurable f μ)
     (h : ∀ᵐ x ∂μ, ‖f x‖ₑ ≤ liminf (‖s · x‖ₑ) atTop) :
-      rearrangement f x μ ≤ liminf (fun i ↦ rearrangement (s i) x μ) atTop := sorry
+      rearrangement f x μ ≤ liminf (fun i ↦ rearrangement (s i) x μ) atTop := by
+        by_contra hab
+        push_neg at hab
+        obtain ⟨y, hb, ha⟩ := exists_between hab
+        rw [lt_rearrangement_iff] at ha
+        have hfatou : distribution f y μ ≤ Filter.liminf (fun i => distribution (s i) y μ) Filter.atTop := by
+          unfold distribution
+          calc μ {a | y < ‖f a‖ₑ}
+              ≤ μ {a | y < Filter.liminf (fun i => ‖s i a‖ₑ) Filter.atTop} := by
+                apply measure_mono_ae
+                filter_upwards [h] with a ha_le
+                exact fun ha_lt => lt_of_lt_of_le ha_lt ha_le
+              _ ≤ Filter.liminf (fun i => μ {a | y < ‖s i a‖ₑ}) Filter.atTop := by
+                sorry
+        have hev : ∀ᶠ i in Filter.atTop, x < distribution (s i) y μ :=
+          Filter.eventually_lt_of_lt_liminf (lt_of_lt_of_le ha hfatou)
+        have hev2 : ∀ᶠ i in Filter.atTop, y ≤ rearrangement (s i) x μ :=
+          hev.mono (fun i hi => (lt_rearrangement_iff.mpr hi).le)
+        exact not_le.mpr hb (Filter.le_liminf_of_le ⟨⊤, fun a _ => le_top⟩ hev2)
 
 -- Lemma 1.1.24 of [Ian Tice]
 lemma distribution_indicator_le_distribution [TopologicalSpace ε] [Zero ε] {f : α → ε}
