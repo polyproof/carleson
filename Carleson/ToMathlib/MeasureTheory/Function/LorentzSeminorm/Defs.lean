@@ -54,7 +54,22 @@ lemma eLorentzNorm'_eq' (p_nonzero : p ≠ 0) (p_ne_top : p ≠ ⊤) {f : α →
   by_cases hqtop : q = ⊤
   · subst hqtop
     simp only [ENNReal.top_ne_zero, not_false_eq_true, ENNReal.inv_top, ENNReal.toReal_zero, sub_zero]
-    sorry
+    simp only [eLpNorm, if_neg (fun a => hq0 a)]
+    simp only [if_pos trivial]
+    apply le_antisymm
+    · exact eLpNormEssSup_mono_measure _ (MeasureTheory.withDensity_absolutelyContinuous _ _)
+    · apply eLpNormEssSup_mono_measure
+      apply MeasureTheory.Measure.AbsolutelyContinuous.mk
+      intro s hs hws
+      rw [MeasureTheory.withDensity_apply _ hs] at hws
+      rw [MeasureTheory.setLIntegral_eq_zero_iff hs (by measurability)] at hws
+      have key : ∀ᵐ (x : NNReal) ∂MeasureTheory.volume, x ∉ s := by
+        filter_upwards [hws] with x hx
+        intro hxs
+        exact absurd (hx hxs) (ENNReal.inv_ne_zero.mpr ENNReal.coe_ne_top)
+      rw [MeasureTheory.ae_iff] at key
+      have : {a : NNReal | ¬a ∉ s} = s := by simp [not_not]
+      rwa [this] at key
   have hq_pos : 0 < q.toReal := ENNReal.toReal_pos hq0 hqtop
   have hp_pos : 0 < p⁻¹.toReal := by rw [ENNReal.toReal_inv]; exact inv_pos.mpr (ENNReal.toReal_pos p_nonzero p_ne_top)
   have hq_inv_mul : q⁻¹.toReal * q.toReal = 1 := by rw [ENNReal.toReal_inv]; exact inv_mul_cancel₀ (ne_of_gt hq_pos)
