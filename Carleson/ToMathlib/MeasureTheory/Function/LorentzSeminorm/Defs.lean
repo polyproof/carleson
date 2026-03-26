@@ -42,7 +42,14 @@ lemma eLorentzNorm'_eq (p_nonzero : p ≠ 0) (p_ne_top : p ≠ ⊤) {f : α → 
   eLorentzNorm' f p q μ
     = eLpNorm (fun (t : ℝ≥0) ↦ t ^ p⁻¹.toReal * rearrangement f t μ) q
         (volume.withDensity (fun (t : ℝ≥0) ↦ t⁻¹)) := by
-  sorry
+  rcases eq_or_ne q 0 with rql | hq0
+  · subst rql; simp [eLpNorm_exponent_zero]
+  · rcases eq_or_ne q ⊤ with rql | hq_top
+    · subst rql
+      simp only [eLorentzNorm', ENNReal.inv_top, ENNReal.toReal_zero, ENNReal.rpow_zero, one_mul]
+      sorry
+    · simp only [eLorentzNorm']
+      sorry
 
 --TODO: probably need some assumptions on q here
 lemma eLorentzNorm'_eq' (p_nonzero : p ≠ 0) (p_ne_top : p ≠ ⊤) {f : α → ε} {μ : Measure α} :
