@@ -190,7 +190,26 @@ theorem lintegral_antitone_mul_le {f g k : ℝ≥0 → ℝ≥0∞}
         rw [MeasureTheory.setLIntegral_iUnion_of_directed g hdir]
         exact iSup_mono fun n => h
   have lhs_eq : ∫⁻ (s : NNReal), k s * f s = ∫⁻ (c : ENNReal), ∫⁻ (s : NNReal) in {s | c < k s}, f s := by
-    sorry
+    have step1 : ∀ s, k s * f s = ∫⁻ (c : ENNReal) in Set.Iio (k s), f s := by
+      intro s; rw [MeasureTheory.setLIntegral_const, mul_comm, ENNReal.volume_Iio]
+    simp_rw [step1]
+    have step2 : ∀ s, ∫⁻ (c : ENNReal) in Set.Iio (k s), f s = ∫⁻ (c : ENNReal), (Set.Iio (k s)).indicator (fun _ => f s) c := by
+      intro s; rw [MeasureTheory.lintegral_indicator measurableSet_Iio]
+    simp_rw [step2]
+    haveI : MeasureTheory.SFinite (MeasureTheory.volume : MeasureTheory.Measure ENNReal) := by
+      show MeasureTheory.SFinite (MeasureTheory.Measure.map ENNReal.ofNNReal MeasureTheory.volume)
+      infer_instance
+    rw [MeasureTheory.lintegral_lintegral_swap]
+    · congr 1
+      ext c
+      have hset : {s : NNReal | c < k s} = k ⁻¹' Set.Ioi c := by
+        ext x; simp [Set.mem_preimage, Set.mem_Ioi, Set.mem_setOf_eq]
+      rw [hset]
+      rw [← MeasureTheory.lintegral_indicator (hk.measurable (measurableSet_Ioi (a := c))) f]
+      apply MeasureTheory.lintegral_congr
+      intro x
+      simp only [Set.indicator, Set.mem_Iio, Set.mem_setOf_eq, Set.mem_preimage, Set.mem_Ioi]
+    · sorry
   have rhs_eq : ∫⁻ (s : NNReal), k s * g s = ∫⁻ (c : ENNReal), ∫⁻ (s : NNReal) in {s | c < k s}, g s := by
     sorry
   rw [lhs_eq, rhs_eq]
