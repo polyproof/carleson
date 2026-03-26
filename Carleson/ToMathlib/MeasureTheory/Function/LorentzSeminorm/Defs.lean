@@ -48,7 +48,33 @@ lemma eLorentzNorm'_eq (p_nonzero : p ≠ 0) (p_ne_top : p ≠ ⊤) {f : α → 
 lemma eLorentzNorm'_eq' (p_nonzero : p ≠ 0) (p_ne_top : p ≠ ⊤) {f : α → ε} {μ : Measure α} :
   eLorentzNorm' f p q μ
     = eLpNorm (fun (t : ℝ≥0) ↦ t ^ (p⁻¹.toReal - q⁻¹.toReal) * rearrangement f t μ) q := by
-  sorry --should be an easy consequence of eLorentzNorm'_eq
+  rw [MeasureTheory.eLorentzNorm'_eq p_nonzero p_ne_top]
+  by_cases hq0 : q = 0
+  · simp [hq0]
+  by_cases hqtop : q = ⊤
+  · subst hqtop
+    simp only [ENNReal.top_ne_zero, not_false_eq_true, ENNReal.inv_top, ENNReal.toReal_zero, sub_zero]
+    sorry
+  have hq_pos : 0 < q.toReal := ENNReal.toReal_pos hq0 hqtop
+  have hp_pos : 0 < p⁻¹.toReal := by rw [ENNReal.toReal_inv]; exact inv_pos.mpr (ENNReal.toReal_pos p_nonzero p_ne_top)
+  have hq_inv_mul : q⁻¹.toReal * q.toReal = 1 := by rw [ENNReal.toReal_inv]; exact inv_mul_cancel₀ (ne_of_gt hq_pos)
+  rw [MeasureTheory.eLpNorm_eq_lintegral_rpow_enorm_toReal hq0 hqtop, MeasureTheory.eLpNorm_eq_lintegral_rpow_enorm_toReal hq0 hqtop]
+  congr 1
+  rw [MeasureTheory.lintegral_withDensity_eq_lintegral_mul _ (by measurability) (by measurability)]
+  refine MeasureTheory.lintegral_congr_ae ?_
+  have : {(0 : NNReal)}ᶜ ∈ MeasureTheory.ae (MeasureTheory.volume : MeasureTheory.Measure NNReal) := by
+    rw [MeasureTheory.compl_mem_ae_iff]; exact MeasureTheory.measure_singleton 0
+  filter_upwards [this] with t ht
+  simp only [Set.mem_compl_iff, Set.mem_singleton_iff] at ht
+  simp only [enorm_eq_self, Pi.mul_apply]
+  rw [ENNReal.mul_rpow_of_nonneg _ _ (le_of_lt hq_pos), ENNReal.mul_rpow_of_nonneg _ _ (le_of_lt hq_pos)]
+  rw [← ENNReal.rpow_mul, ← ENNReal.rpow_mul]
+  rw [show (↑t : ENNReal)⁻¹ = (↑t : ENNReal) ^ ((-1 : ℝ)) from by rw [ENNReal.rpow_neg_one]]
+  rw [mul_comm ((↑t : ENNReal) ^ (-1 : ℝ)) _, mul_assoc, mul_comm (MeasureTheory.rearrangement f (↑t) μ ^ q.toReal) ((↑t : ENNReal) ^ (-1 : ℝ)), ← mul_assoc]
+  congr 1
+  rw [← ENNReal.rpow_add (p⁻¹.toReal * q.toReal) (-1) (ENNReal.coe_ne_zero.mpr ht) ENNReal.coe_ne_top]
+  congr 1
+  linarith --should be an easy consequence of eLorentzNorm'_eq
 
 lemma eLorentzNorm'_eq_integral_distribution_rpow {_ : MeasurableSpace α} {f : α → ε}
   {μ : Measure α} :
